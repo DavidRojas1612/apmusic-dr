@@ -1,0 +1,22 @@
+
+server:
+  port: 9080
+  servlet:
+    context-path: /songs
+
+spring:
+  datasource:
+    driverClassName: org.postgresql.Driver
+    platform: postgres
+    url: jdbc:postgresql://ec2-174-129-255-106.compute-1.amazonaws.com:5432/d9k1gctmn9jj9a
+    username: lhutlhccsgoeww
+    password: 3472d5bf4dac80e626e08255beca96974e06276f036d6c46bfa4997454f59ef1
+  jpa:
+    hibernate.ddl-auto: update
+    generate-ddl: true
+    ##show-sql: true
+
+logging:
+  level:
+    # Hides HHH000424: Disabling contextual LOB creation as createClob() method threw error
+    org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl: WARN
