@@ -6,17 +6,33 @@ import java.util.Optional;
 
 import com.appmusic.appmusicdr.model.PlayList;
 import com.appmusic.appmusicdr.services.IPlayList;
+import com.appmusic.appmusicdr.services.impl.PlayListS;
+import com.appmusic.appmusicdr.utils.Response;
+import com.appmusic.appmusicdr.utils.ResponseFormatter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 public class PlayListController {
+    Response res = new Response();
+
     @Autowired
     IPlayList playListService;
 
     @PostMapping(value = "/lists")
-    public PlayList saveSong(@RequestBody PlayList newPlayList) {
-        return playListService.save(newPlayList);
+    public ResponseEntity saveSong(@RequestBody PlayList newPlayList) {
+        if(newPlayList.getName() == null || newPlayList.getName().isEmpty()){
+            res.setCodeMessage(400);
+            res.setMessage("400 Bad Request");
+            return new ResponseEntity(res.getMessage(),HttpStatus.valueOf(res.getCodeMessage()));
+        }
+        PlayList newPlaylistResponse =  playListService.save(newPlayList);
+        res.setCodeMessage(201);
+        res.setMessageBody(newPlaylistResponse);
+        return new ResponseEntity(res.getMessageBody(),HttpStatus.valueOf(res.getCodeMessage()));
+
     }
 
     @GetMapping(value="/lists")
@@ -25,17 +41,17 @@ public class PlayListController {
     }
 
     @GetMapping(value="/lists/{name}")
-    public Optional<String> getListDescription(@PathVariable(value="name") String name){
-        return playListService.getDescription(name);
+    public ResponseEntity getListDescription(@PathVariable(value="name") String name){
+        return ResponseFormatter.formatterResponse(playListService.getDescription(name));
     }
 
     @PutMapping(value="/lists/{name}")
-    public Optional<PlayList> modifiedList(@PathVariable(value="name") String name, @RequestBody PlayList update){
-        return playListService.updateDescription(name, update);
+    public ResponseEntity modifiedList(@PathVariable(value="name") String name, @RequestBody PlayList update){
+        return ResponseFormatter.formatterResponse(playListService.updateDescription(name, update));
     }
 
     @DeleteMapping(value="/lists/{name}")
-    public boolean deleteList(@PathVariable(value="name") String name){
-        return playListService.delete(name);
+    public ResponseEntity deleteList(@PathVariable(value="name") String name){
+        return ResponseFormatter.formatterResponse(playListService.delete(name));
     }
 }

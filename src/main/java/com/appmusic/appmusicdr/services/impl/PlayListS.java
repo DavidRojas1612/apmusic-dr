@@ -5,6 +5,7 @@ import com.appmusic.appmusicdr.dao.IdaoPlayList;
 import com.appmusic.appmusicdr.model.PlayList;
 import com.appmusic.appmusicdr.services.IPlayList;
 
+import com.appmusic.appmusicdr.utils.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,44 +17,73 @@ import java.util.Optional;
 public class PlayListS implements IPlayList {
 
     @Autowired
-    private IdaoPlayList daoPlayList;
+    private IdaoPlayList playListsDao;
 
     @Override
     @Transactional
     public PlayList save(PlayList newPlayList) {
-        return daoPlayList.save(newPlayList);
+        return playListsDao.save(newPlayList);
     }
 
     @Override
     @Transactional
     public ArrayList<PlayList> getAll() {
         ArrayList<PlayList> allPlayLists = new ArrayList<>();
-        for(PlayList playLists: daoPlayList.findAll()){
+        for(PlayList playLists: playListsDao.findAll()){
             allPlayLists.add(playLists);
         }
         return allPlayLists;
     }
 
     @Override
-    public Optional<String> getDescription(String listName) {
-        Optional<PlayList> playLists= daoPlayList.findById(listName);
-        return playLists.map(x->x.getDescription());
-
+    public Response getDescription(String listName) {
+        Response res = new Response();
+        Optional<PlayList> playLists= playListsDao.findById(listName);
+        if (!playLists.isPresent()){
+            res.setCodeMessage(404);
+            res.setState(false);
+        } else{
+            res.setState(true);
+            res.setCodeMessage(200);
+            res.setMessageBody(playLists.map(x -> x.getDescription()));
+        }
+        return res;
     }
 
     @Override
-    public Optional<PlayList> updateDescription(String listName, PlayList playLists) {
-        Optional<PlayList> newPlayLists = daoPlayList.findById(listName);
-        newPlayLists.map(name->{name.setDescription(playLists.getDescription());
-            return name;});
-        return newPlayLists;
-
+    @Transactional
+    public Response updateDescription(String listName, PlayList playLists) {
+        Response res = new Response();
+        if(listName.equals(playLists.getName())) {
+            Optional<PlayList> newPlayLists = playListsDao.findById(listName);
+            if (!newPlayLists.isPresent()){
+                res.setCodeMessage(404);
+                res.setState(false);
+            } else {
+                Optional<PlayList> updatedPlayLists = newPlayLists.map(name->{name.setDescription(playLists.getDescription());
+                    return name;});
+                playListsDao.save(updatedPlayLists.get());
+                res.setCodeMessage(204);
+                res.setState(true);
+                res.setMessageBody(updatedPlayLists);
+            }
+        } else {
+            res.setCodeMessage(409);
+            res.setState(false);
+        }
+        return res;
     }
 
     @Override
-    public boolean delete(String name) {
-        boolean listExist = daoPlayList.existsById(name);
-        daoPlayList.deleteById(name);
-        return listExist;
+    public Response delete(String name) {
+        Response res = new Response();
+        boolean playlistExist = playListsDao.existsById(name);
+        if (playlistExist) {
+            playListsDao.deleteById(name);
+            res.setCodeMessage(204);
+        } else{
+            res.setCodeMessage(404);
+        }
+        return res;
     }
 }
